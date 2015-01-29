@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+function print_usage(){
+  echo "Usage: build source-file [option]"
+  echo "       where option is one of:"
+  echo "  export               export header file"
+}
+
+if [ $# = 0 ]; then
+  print_usage
+  exit
+fi
+
+if [ ! -f mloop.mlb ]; then
+  touch mloop.mlb
+fi
+cat mloop_.mlb > mloop.mlb
+echo "$1" >> mloop.mlb
+
+if [ "$2" = "export" ]; then
+  mlton -default-ann 'allowFFI true' -export-header export.h -stop tc mloop.mlb
+else
+  make mloop
+  mlton -default-ann 'allowFFI true' -link-opt '-luuid -lstdc++ -lpthread -lcrypto' mloop.mlb utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o
+fi
+
+

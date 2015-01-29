@@ -1,0 +1,3 @@
+gcc -c main.c
+g++ -c hdfs_fs.cpp
+g++ main.o hdfs_fs.o -o main
