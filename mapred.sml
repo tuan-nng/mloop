@@ -24,39 +24,6 @@ fun fetchCString p =
 
 fun cstring content = content ^ "\000"
 
-structure Context = struct
-    local 
-        val batchSize = 10000
-        val k = ref [] : string list ref
-        val v = ref [] : string list ref
-    in
-        fun flushAll (address: MLton.Pointer.t) = 
-            let 
-                val len = List.length (!k)
-            in 
-                if len > 0 then 
-                    let
-                        val keys_arr = Array.fromList (!k)
-                        val values_arr = Array.fromList (!v)
-                    in
-                        k := []; v := [];
-                        emitBatch(address, keys_arr, values_arr, len)
-                    end
-                else ()
-            end
-        fun emit (address:MLton.Pointer.t, key:string, value:string) = 
-            let 
-                val len = List.length (!k)
-                val ckey = cstring key
-                val cvalue = cstring value
-            in
-                k := ckey::(!k);
-                v := cvalue::(!v);
-                if len >= batchSize then flushAll (address)
-                else ()
-            end
-    end 
-end
 structure ControlledValue = struct
   datatype value = Content of {set: MLton.Pointer.t -> unit, get: unit -> MLton.Pointer.t}
   exception InvalidInit of string
@@ -79,12 +46,7 @@ structure MapContext = struct
     fun getInputValue ():string = fetchCString (getInputValueMapContext (getAddress ()))
     fun getInputKey ():string = fetchCString (getInputKeyMapContext(getAddress()))
 
-
-    fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
-    (*fun emit (key:string, value:string) = emitData  (getAddress (), key, value)*)
-    
-    fun flushAll () = Context.flushAll (getAddress ())
-            
+    fun emit (key:string, value:string) = emitData  (getAddress (), key, value)       
         
 end
 
