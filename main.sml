@@ -9,7 +9,7 @@ fun mloop_map (key:string, value:string) =
         ()
     end
 *)
-fun mloop_map () =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+fun mloop_map_ () =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
     let
         val line = MapContext.getInputValue ()
             val splitter = String.tokens(fn c => c = #" ")
@@ -64,8 +64,6 @@ fun mloop_map_ (key:MLton.Pointer.t, value:MLton.Pointer.t) =
     (mloop_map (fetchCString key, fetchCString value);MapContext.flushAll ()) 
 *)
 
-fun mloop_map_ () = 
-    (mloop_map (); MapContext.flushAll ())
 
 fun mloop_combine_ (address:MLton.Pointer.t, key:MLton.Pointer.t, valueSet:MLton.Pointer.t, size:int) = 
     let 
@@ -107,6 +105,12 @@ val _ = r (fn () => mloop_reduce_ ())
 
 val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t * MLton.Pointer.t * int  -> unit) -> unit;
 val _ = c (fn (address, key,valueSet,size) => mloop_combine_ (address, key,valueSet,size))
+
+val m_f = _export "map_flush": (unit  -> unit) -> unit;
+val _ = m_f (fn () => MapContext.flushAll ())
+
+val r_f = _export "reduce_flush": (unit  -> unit) -> unit;
+val _ = r_f (fn () => ReduceContext.flushAll ())
 
 val runTask = _import "runTask" public: bool*bool*bool -> int;
 val v = runTask (false, true, false)

@@ -26,33 +26,24 @@ fun cstring content = content ^ "\000"
 
 structure Context = struct
     local 
-        val batchSize = 10000
-        val k = ref [] : string list ref
-        val v = ref [] : string list ref
+        val batchSize = 1000
+        val k = Array.array(1000,"")
+        val v = Array.array(1000,"")
+        val len = ref 0
     in
         fun flushAll (address: MLton.Pointer.t) = 
-            let 
-                val len = List.length (!k)
-            in 
-                if len > 0 then 
-                    let
-                        val keys_arr = Array.fromList (!k)
-                        val values_arr = Array.fromList (!v)
-                    in
-                        k := []; v := [];
-                        emitBatch(address, keys_arr, values_arr, len)
-                    end
+                if (!len) > 0 then 
+                    (emitBatch(address, k, v, !len); len := 0)
                 else ()
-            end
         fun emit (address:MLton.Pointer.t, key:string, value:string) = 
             let 
-                val len = List.length (!k)
                 val ckey = cstring key
                 val cvalue = cstring value
             in
-                k := ckey::(!k);
-                v := cvalue::(!v);
-                if len >= batchSize then flushAll (address)
+                Array.update (k,!len,ckey);
+                Array.update (v,!len,cvalue);
+                len := (!len) + 1;
+                if (!len + 1) >= batchSize then flushAll (address)
                 else ()
             end
     end 
@@ -118,7 +109,9 @@ structure ReduceContext = struct
       end
       *)
 
-    fun emit (key:string, value:string) = emitData  (getAddress (), key, value)
+    fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
+    (*fun emit (key:string, value:string) = emitData  (getAddress (), key, value)*)
     
+    fun flushAll () = Context.flushAll (getAddress ())
 
 end

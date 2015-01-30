@@ -23,6 +23,7 @@ void MloopMapper::map(hp::MapContext& ctx) {
 }
 
 void MloopMapper::close() {
+    map_flush();
 }
 
 MloopMapper::~MloopMapper() {
@@ -62,6 +63,7 @@ void MloopReducer::reduce(hp::ReduceContext& ctx) {
 }
 
 void MloopReducer::close() {
+    reduce_flush();
 }
 
 MloopReducer::~MloopReducer() {
