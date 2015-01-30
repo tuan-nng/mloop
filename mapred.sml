@@ -81,12 +81,7 @@ structure MapContext = struct
     fun getInputKey ():string = fetchCString (getInputKeyMapContext(getAddress()))
 
     fun emit (key:string, value:string) = emitData  (getAddress (), cstring key, cstring value)
-
-(*
-    fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
-
-    fun flushAll () = Context.flushAll (getAddress ())
-     *)      
+          
 end
 
 structure ReduceContext = struct
@@ -107,11 +102,7 @@ structure ReduceContext = struct
       in 
         push []
       end 
-      
+  
     fun emit (key:string, value:string) = emitData  (getAddress (), cstring key, cstring value)
 
-(*
-    fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
-    fun flushAll () = Context.flushAll (getAddress ())
-*)
 end

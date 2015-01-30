@@ -16,17 +16,18 @@ fun mloop_reduce (key:string)=
             in 
                 Option.getOpt(x,0)
             end
-        val values = ReduceContext.getValueSet ()
-        val sum = foldl (fn (str:string, s:int) => s + (fromString str)) 0 values
+        val sum = ref 0
     in
-        ReduceContext.emit(key, Int.toString(sum))
+        while (ReduceContext.nextValue()) do
+            sum := (!sum) + (fromString (ReduceContext.getInputValue()));
+        ReduceContext.emit(key, Int.toString(!sum))
     end
 
 fun mloop_combine (key:string, values:string list) = 
     mloop_reduce (key)
 
-fun init_map addr = (MapContext.setAddress addr; Context.reset ())
-fun init_reduce (addr:MLton.Pointer.t) = (ReduceContext.setAddress addr; Context.reset ())
+fun init_map addr = MapContext.setAddress addr
+fun init_reduce (addr:MLton.Pointer.t) = ReduceContext.setAddress addr
 
 
 fun mloop_map_ (key:MLton.Pointer.t, value:MLton.Pointer.t) = mloop_map (fetchCString key, fetchCString value)
@@ -58,13 +59,6 @@ val _ = r (fn (k) => mloop_reduce_ (k))
 
 val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t * MLton.Pointer.t * int  -> unit) -> unit;
 val _ = c (fn (address, key,valueSet,size) => mloop_combine_ (address, key,valueSet,size))
-(*
-val m_f = _export "map_flush": (unit  -> unit) -> unit;
-val _ = m_f (fn () => MapContext.flushAll ())
-
-val r_f = _export "reduce_flush": (unit  -> unit) -> unit;
-val _ = r_f (fn () => ReduceContext.flushAll ())
-*)
 
 val runTask = _import "runTask" public: bool*bool*bool -> int;
 val v = runTask (false, true, false)
