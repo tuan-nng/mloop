@@ -24,6 +24,15 @@ fun fetchCString p =
 
 fun cstring content = content ^ "\000"
 
+fun convertToList (valueSet:MLton.Pointer.t, size:int):string list = 
+    let
+        fun parseData (data:string list, p:MLton.Pointer.t, len:int, offset:int):string list = if offset < len then 
+            let val v = fetchCString (MLton.Pointer.getPointer(p,offset)) in parseData(v::data, p, len, offset + 1) end
+            else data
+    in
+        parseData (nil, valueSet, size, 0)
+    end
+
 structure Context = struct
     local 
         val batchSize = 1500

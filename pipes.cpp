@@ -39,27 +39,8 @@ MloopReducer::MloopReducer(hp::ReduceContext& ctx) {
 }
 
 void MloopReducer::reduce(hp::ReduceContext& ctx) {
-    
     std::string key = ctx.getInputKey();
-    vector<char*> data;
-    while (ctx.nextValue()) {
-        string value = ctx.getInputValue();
-        char* c = new char[value.length() + 1];
-        strcpy(c, value.c_str());
-        data.push_back(c);
-    }
-
-    int size = data.size();
-    const char** valueSet = new const char*[size];
-    for (int i = 0; i < size; i++) {
-
-        valueSet[i] = data[i];
-    }
-    mloop_reduce_((CPointer) key.c_str(), (CPointer) valueSet, size);
-    for (int i = 0; i < size; i++) delete [] valueSet[i];
-    delete []valueSet;
-    //std::string key = ctx.getInputKey();
-    //mloop_reduce_((CPointer) key.c_str());
+    mloop_reduce_((CPointer) key.c_str());
 }
 
 void MloopReducer::close() {

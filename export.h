@@ -168,7 +168,7 @@ extern "C" {
 MLLIB_PUBLIC(void init_map (CPointer x0);)
 MLLIB_PUBLIC(void init_reduce (CPointer x0);)
 MLLIB_PUBLIC(void mloop_map_ (CPointer x0, CPointer x1);)
-MLLIB_PUBLIC(void mloop_reduce_ (CPointer x0, CPointer x1, Int32 x2);)
+MLLIB_PUBLIC(void mloop_reduce_ (CPointer x0);)
 MLLIB_PUBLIC(void mloop_combine_ (CPointer x0, CPointer x1, CPointer x2, Int32 x3);)
 
 #undef MLLIB_PRIVATE
