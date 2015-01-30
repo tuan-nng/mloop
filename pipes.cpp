@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <string>
 #include <string.h>
-//#include <vector>
+#include <vector>
 
 using std::string;
-//using std::vector;
+using std::vector;
 #define BATCH_READ 10000
 
 MloopMapper::MloopMapper(hp::MapContext& ctx) {
@@ -16,14 +16,13 @@ MloopMapper::MloopMapper(hp::MapContext& ctx) {
 }
 
 void MloopMapper::map(hp::MapContext& ctx) {
-    //string key = ctx.getInputKey();
-    //string value = ctx.getInputValue();
-    //mloop_map_((CPointer) key.c_str(), (CPointer) value.c_str());
-    mloop_map_();
+    string key = ctx.getInputKey();
+    string value = ctx.getInputValue();
+    mloop_map_((CPointer) key.c_str(), (CPointer) value.c_str());
 }
 
 void MloopMapper::close() {
-    map_flush();
+    //map_flush();
 }
 
 MloopMapper::~MloopMapper() {
@@ -40,7 +39,7 @@ MloopReducer::MloopReducer(hp::ReduceContext& ctx) {
 }
 
 void MloopReducer::reduce(hp::ReduceContext& ctx) {
-    /*
+    
     std::string key = ctx.getInputKey();
     vector<char*> data;
     while (ctx.nextValue()) {
@@ -58,12 +57,13 @@ void MloopReducer::reduce(hp::ReduceContext& ctx) {
     }
     mloop_reduce_((CPointer) key.c_str(), (CPointer) valueSet, size);
     for (int i = 0; i < size; i++) delete [] valueSet[i];
-    delete []valueSet; */
-    mloop_reduce_();
+    delete []valueSet;
+    //std::string key = ctx.getInputKey();
+    //mloop_reduce_((CPointer) key.c_str());
 }
 
 void MloopReducer::close() {
-    reduce_flush();
+    //reduce_flush();
 }
 
 MloopReducer::~MloopReducer() {

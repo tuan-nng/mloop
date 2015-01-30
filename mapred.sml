@@ -26,9 +26,9 @@ fun cstring content = content ^ "\000"
 
 structure Context = struct
     local 
-        val batchSize = 1000
-        val k = Array.array(1000,"")
-        val v = Array.array(1000,"")
+        val batchSize = 1500
+        val k = Array.array(batchSize,"")
+        val v = Array.array(batchSize,"")
         val len = ref 0
     in
         fun flushAll (address: MLton.Pointer.t) = 
@@ -46,6 +46,7 @@ structure Context = struct
                 if (!len + 1) >= batchSize then flushAll (address)
                 else ()
             end
+        fun reset () = len := 0
     end 
 end
 structure ControlledValue = struct
@@ -70,13 +71,13 @@ structure MapContext = struct
     fun getInputValue ():string = fetchCString (getInputValueMapContext (getAddress ()))
     fun getInputKey ():string = fetchCString (getInputKeyMapContext(getAddress()))
 
+    fun emit (key:string, value:string) = emitData  (getAddress (), cstring key, cstring value)
 
+(*
     fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
-    (*fun emit (key:string, value:string) = emitData  (getAddress (), key, value)*)
-    
+
     fun flushAll () = Context.flushAll (getAddress ())
-            
-        
+     *)      
 end
 
 structure ReduceContext = struct
@@ -96,22 +97,12 @@ structure ReduceContext = struct
 		else l
       in 
         push []
-      end
-    (*
-    fun getValueSet ():string list = let
-        val res = ref nil : string list ref
-        fun push (value:string, nil) = [value]
-            | push (value:string, l) = value::l
-      in 
-        while (nextValue ()) do 
-            res := push (getInputValue (), !res);
-        !res
-      end
-      *)
+      end 
+      
+    fun emit (key:string, value:string) = emitData  (getAddress (), cstring key, cstring value)
 
+(*
     fun emit (key:string, value:string) = Context.emit (getAddress (), key, value)
-    (*fun emit (key:string, value:string) = emitData  (getAddress (), key, value)*)
-    
     fun flushAll () = Context.flushAll (getAddress ())
-
+*)
 end
