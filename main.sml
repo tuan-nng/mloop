@@ -23,7 +23,7 @@ fun mloop_reduce (key:string)=
         ReduceContext.emit(key, Int.toString(!sum))
     end
 
-fun mloop_combine (key:string, values:string list) = 
+fun mloop_combine (key:string) = 
     mloop_reduce (key)
 
 fun init_map addr = MapContext.setAddress addr
@@ -33,11 +33,11 @@ fun init_reduce (addr:MLton.Pointer.t) = ReduceContext.setAddress addr
 fun mloop_map_ (key:MLton.Pointer.t, value:MLton.Pointer.t) = mloop_map (fetchCString key, fetchCString value)
 
 
-fun mloop_combine_ (address:MLton.Pointer.t, key:MLton.Pointer.t, valueSet:MLton.Pointer.t, size:int) = 
+fun mloop_combine_ (address:MLton.Pointer.t, key:MLton.Pointer.t) = 
     let 
         val _ = ReduceContext.setAddress address
     in 
-        mloop_combine (fetchCString (key), convertToList(valueSet, size))
+        mloop_combine (fetchCString (key))
     end
 
 fun mloop_reduce_ (key:MLton.Pointer.t) = mloop_reduce (fetchCString (key))
@@ -57,8 +57,8 @@ val r = _export "mloop_reduce_": (MLton.Pointer.t  -> unit) -> unit;
 val _ = r (fn (k) => mloop_reduce_ (k))
 
 
-val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t * MLton.Pointer.t * int  -> unit) -> unit;
-val _ = c (fn (address, key,valueSet,size) => mloop_combine_ (address, key,valueSet,size))
+val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t  -> unit) -> unit;
+val _ = c (fn (address, key) => mloop_combine_ (address, key))
 
 val runTask = _import "runTask" public: bool*bool*bool -> int;
-val v = runTask (false, true, false)
+val v = runTask (true, true, false)

@@ -57,23 +57,9 @@ MloopCombiner::MloopCombiner(hp::MapContext& ctx) {
 }
 
 void MloopCombiner::reduce(hp::ReduceContext& ctx) {
-    //    hp::ReduceContext* ptr = &ctx;
-    //    std::string key = ctx.getInputKey();
-    //    vector<string> data;
-    //    while (ctx.nextValue()) {
-    //        string value = ctx.getInputValue();
-    //        data.push_back(value);
-    //    }
-    //
-    //    int size = data.size();
-    //    const char** valueSet = new const char*[size];
-    //    for (int i = 0; i < size; i++) {
-    //
-    //        valueSet[i] = data[i].c_str();
-    //    }
-    //    mloop_combine_((CPointer) ptr, (CPointer) key.c_str(), (CPointer) valueSet, size);
-    //    delete []valueSet;
-    //    data.clear();
+        hp::ReduceContext* ptr = &ctx;
+        std::string key = ctx.getInputKey();     
+        mloop_combine_((CPointer) ptr, (CPointer) key.c_str());
 }
 
 void MloopCombiner::close() {
