@@ -6,7 +6,7 @@ main: main.o hdfs_fs.o utils.o hdfs_common.o jni_helper.o hdfs.o exception.o Had
 shadoop: shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o
 	g++ shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o  -o shadoop -luuid -lpthread -lcrypto
 	
-mloop: utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o
+mloop: serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o hdfs_fs.o
 	
 shadoop.o: shadoop.c
 	gcc -c shadoop.c 
@@ -22,7 +22,6 @@ main.o: main.c
 
 hdfs_fs.o: hdfs_fs.cpp
 	g++ -c hdfs_fs.cpp -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux 
-
 	
 hdfs.o: hdfs.c
 	gcc -c hdfs.c -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux
@@ -47,5 +46,8 @@ StringUtils.o: StringUtils.cc
 	
 HadoopPipes_cpp.o: HadoopPipes.cpp
 	g++ -c HadoopPipes.cpp -I./ -o HadoopPipes_cpp.o
+	
+serial.o : pipes_serial_utils.cpp
+	g++ -c pipes_serial_utils.cpp -I./ -o serial.o
 clean: 
 	rm -rf *o main 

@@ -165,6 +165,10 @@ typedef Pointer Objptr;
 extern "C" {
 #endif
 
+MLLIB_PUBLIC(void reader_init (CPointer x0, Int64 x1, Int64 x2);)
+MLLIB_PUBLIC(void reader_setBytesRead (Int64 x0);)
+MLLIB_PUBLIC(void reader_setup ();)
+MLLIB_PUBLIC(Int32 reader_nextVal ();)
 MLLIB_PUBLIC(void init_map (CPointer x0);)
 MLLIB_PUBLIC(void init_reduce (CPointer x0);)
 MLLIB_PUBLIC(void mloop_map_ (CPointer x0, CPointer x1);)

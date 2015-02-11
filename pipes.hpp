@@ -25,17 +25,11 @@
 #include <hadoop/SerialUtils.hh>
 #include <hadoop/Pipes.hh>
 #include <stdio.h>
+#include "libhdfs/hdfs.h"
 
 namespace hu = HadoopUtils;
 namespace hp = HadoopPipes;
 
-
-//#define DESTROY_PYTHON_TOO(wobj_t)                                   \
-//    if (in_cxx_land) {                                               \
-//      bp::reference_existing_object::apply<wobj_t*>::type converter; \
-//      PyObject* self = converter(this);                              \
-//      while (Py_REFCNT(self) > 0){Py_DECREF(self);}                  \
-//    }
 
 class MloopMapper : public hp::Mapper {
 private:
@@ -114,6 +108,26 @@ public:
 //};
 
 class MloopRecordReader : public hp::RecordReader {
+private:
+    hdfsFS fs;
+    hdfsFile file;
+    uint64_t offset;
+    uint64_t length;
+    uint64_t bytes_read;
+    std::string* key;
+    std::string* value;
+public:
+    MloopRecordReader(hp::MapContext& ctx);
+    bool next(std::string& key, std::string& value);
+    float getProgress();
+    hdfsFS getFs();
+    hdfsFile getFile();
+    uint64_t getOffset();
+    uint64_t getLength();
+    uint64_t getBytes_read();
+    void setBytes_read(uint64_t bytes);
+    void setKeyValue(std::string* key, std::string* value);
+    ~MloopRecordReader();
 };
 //
 //struct wrap_record_writer: hp::RecordWriter, bp::wrapper<hp::RecordWriter>, cxx_capsule {
@@ -169,6 +183,8 @@ public:
     }
 
     hp::RecordReader* createRecordReader(hp::MapContext& ctx) const {
+        if (reader)
+            return new MloopRecordReader(ctx);
         return NULL;
     }
 

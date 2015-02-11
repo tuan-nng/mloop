@@ -1,10 +1,17 @@
 #include "HadoopPipes.h"
-#include <hadoop/Pipes.hh>
+#include "hadoop/Pipes.hh"
 #include <stdio.h>
 #include "export.h"
+#include "libhdfs/hdfs.h"
+#include "pipes.hpp"
+#include <cstring>
+#include <string>
 
 namespace hp = HadoopPipes;
 using namespace hp;
+using std::string;
+
+#define BUFF_SIZE 1000
 extern "C" {
 
     CPointer mapContext_getInputValue(CPointer mapContext) {
@@ -18,12 +25,6 @@ extern "C" {
         std::string value = context->getInputKey();
         return (CPointer) value.c_str();
     }
-
-    //    void mapContext_emit(CPointer mapContextAddr, char* key, char* value) {
-    //        hp::MapContext* context = convertAddressStringToPointer<hp::MapContext>((char*) mapContextAddr);
-    //        std::string k(key), v(value);
-    //        context->emit(k, v);
-    //    }
 
     void context_emit(CPointer taskContext, CPointer key, CPointer value) {
         TaskContext* context = (TaskContext*) taskContext;
@@ -66,5 +67,58 @@ extern "C" {
         ReduceContext* context = (ReduceContext*) reduceContext;
         std::string key = context->getInputKey();
         return (CPointer) key.c_str();
+    }
+
+    CPointer readInputSplitLine(CPointer reader_, Int64 bytes_read) {
+        MloopRecordReader* reader = (MloopRecordReader*) reader_;
+        hdfsFile file = reader->getFile();
+        hdfsFS fs = reader->getFs();
+        uint64_t off = reader->getOffset();
+        uint64_t bRead = (bytes_read > reader->getLength()) ? reader->getLength() : bytes_read;
+        //printf("Offset: %ld, bytes read: %ld    \n", off, bRead);
+        char* buffer = new char[BUFF_SIZE];
+        hdfsSeek(fs, file, off + bRead);
+        tSize t = 1;
+        uint64_t len = 0;
+        while (t > 0) {
+            t = hdfsRead(fs, file, buffer, BUFF_SIZE);           
+            if (t == 0)
+                break;
+            char* ptr = strchr(buffer, '\0');
+            if (!ptr || ptr - buffer >= BUFF_SIZE)
+                ptr = strchr(buffer, '\n');
+            if (!ptr || ptr - buffer >= BUFF_SIZE)
+                ptr = strchr(buffer, '\r');
+            if (ptr != NULL && ptr - buffer < BUFF_SIZE) {
+                len += ptr - buffer + 1; // read also the end of line
+                break;
+            } else len += t;
+        }
+        delete [] buffer;
+        if (len == 0) {
+            if (t == 0) return NULL;
+            else {
+                std::string empty("");
+                return (CPointer) empty.c_str();
+            }
+        }
+        buffer = new char[len + 1];
+        hdfsSeek(fs, file, off + bRead);
+        hdfsRead(fs, file, buffer, len);
+        buffer[len] = '\0';
+        string val("");
+        val.assign(buffer, len + 1);
+        reader->setBytes_read(bRead + len);
+        delete [] buffer;
+        reader_setBytesRead((Int64) bRead + len);
+        return (CPointer) val.c_str();
+    }
+
+    void setKeyValue(CPointer reader_, CPointer key, CPointer value) {
+        MloopRecordReader* reader = (MloopRecordReader*) reader_;
+        std::string* k = new string((char*) key);
+        std::string* v = new string((char*) value);
+        reader->setKeyValue(k, v);
+        printf("KEY-VALUE received from MLOOP. OK!\n");
     }
 }

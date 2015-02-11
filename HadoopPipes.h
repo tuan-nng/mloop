@@ -24,6 +24,9 @@ extern "C" {
     CPointer reduceContext_getInputKey(CPointer reduceContext);
     CPointer reduceContext_getValueSet(CPointer reduceContext);
     int32_t reduceContext_nextValue(CPointer reduceContext);
+    
+    CPointer readInputSplitLine(CPointer reader, Int64 bytes_read); 
+    void setKeyValue(CPointer reader, CPointer key, CPointer value);
 
 #ifdef	__cplusplus
 }

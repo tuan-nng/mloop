@@ -1,7 +1,7 @@
 
 fun mloop_map (key:string, value:string) = 
     let
-        val splitter = String.tokens(fn c => c = #" ")
+        val splitter = String.tokens(fn c => Char.isSpace c)
         val words = splitter value
         
     in   
