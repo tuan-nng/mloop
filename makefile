@@ -6,7 +6,7 @@ main: main.o hdfs_fs.o utils.o hdfs_common.o jni_helper.o hdfs.o exception.o Had
 shadoop: shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o
 	g++ shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o  -o shadoop -luuid -lpthread -lcrypto
 	
-mloop: serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o hdfs_fs.o
+mloop: serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o hdfs_fs.o LineReader.o
 	
 shadoop.o: shadoop.c
 	gcc -c shadoop.c 
@@ -49,5 +49,8 @@ HadoopPipes_cpp.o: HadoopPipes.cpp
 	
 serial.o : pipes_serial_utils.cpp
 	g++ -c pipes_serial_utils.cpp -I./ -o serial.o
+	
+LineReader.o: LineReader.cpp
+	g++ -c LineReader.cpp -I./																												
 clean: 
 	rm -rf *o main 

@@ -9,8 +9,9 @@ val getValueSetReduceContext = _import "reduceContext_getValueSet" public : MLto
 val nextValueReduceContext = _import "reduceContext_nextValue" public : MLton.Pointer.t -> bool;
 val getInputKeyReduceContext = _import "reduceContext_getInputKey" public : MLton.Pointer.t -> MLton.Pointer.t;
 
-val readSplitLine = _import "readInputSplitLine" public : MLton.Pointer.t * Int64.int -> MLton.Pointer.t;
+val readSplitLine = _import "readInputSplitLine" public : MLton.Pointer.t -> MLton.Pointer.t;
 val setKeyValue = _import "setKeyValue" public : MLton.Pointer.t * string * string -> unit;
+val seekHdfs = _import "seekHdfs" public : MLton.Pointer.t * Int64.int -> unit;
 
 fun strlen p =
    let
@@ -115,18 +116,19 @@ structure Reader = struct
         val buffer = ref "": string ref
         val bytes_read = ref 0 : Int64.int ref
         val offset = ref 0 : Int64.int ref
+        val offsetNow = ref 0: Int64.int ref
         val leng = ref 0 : Int64.int ref
     in
         fun init (f,off,len) = (reader := f; offset := off; leng := len)
-        fun readLine bytes_read = let 
-            val line = readSplitLine (!reader,bytes_read)
+        fun readLine () = let 
+            val line = readSplitLine (!reader)
             in
-                if line = MLton.Pointer.null then ("",true)
-                else (fetchCString line, false)
+                fetchCString line
             end
         fun getOffset () = !offset
         fun getBytes_read () = !bytes_read
-        fun setBytes_read bytes = bytes_read := bytes
+        fun updateOffset_bytesConsumed (off,bytes) = (offsetNow := off; bytes_read := bytes)
+        fun getOffsetNow () = !offsetNow
         fun length ():Int64.int = !leng
         fun get () = !reader
     end
@@ -136,32 +138,36 @@ end
 val r = _export "reader_init": (MLton.Pointer.t * Int64.int * Int64.int -> unit) -> unit;
 val _ = r (fn (file,offset,length) => Reader.init (file,offset,length))
 
-val s = _export "reader_setBytesRead": (Int64.int -> unit) -> unit;
-val _ = s (fn bytes => Reader.setBytes_read bytes)
+val s = _export "reader_updateOffset_bytesConsumed": (Int64.int * Int64.int-> unit) -> unit;
+val _ = s (fn (off,bytes) => Reader.updateOffset_bytesConsumed (off,bytes))
 
-fun setUpReader () = 
-    if (Reader.getOffset()) = 0 then () else (Reader.readLine (~1:Int64.int);())
-    
+fun setUpReader () = let
+    val offset = Reader.getOffset()
+    val reader = Reader.get()
+    in
+        if offset = 0 then () 
+        else (seekHdfs(reader, offset - 1); Reader.readLine ();())
+    end
 
 fun readNext () = let 
+    val offset = Reader.getOffsetNow ()
     fun append (result, i) =
-        let
+        let                
+            val line = Reader.readLine ()
+            val offNow = Reader.getOffsetNow ()
             val bytes_read = Reader.getBytes_read() 
-            val (line,eof) = Reader.readLine (bytes_read)
-            val end_of_split = eof orelse bytes_read >= (Reader.length())
+            val end_of_split = bytes_read = 0 orelse offNow >= ((Reader.length()) + (Reader.getOffset()))
         in 
             case (end_of_split, i = 2, i = 0) of
                 (true,true,_) => (result,false)
-                | (true,false,_) => (result,true)
-                | (false,_,true) => (result ^ line, true) 
-                | _ => append (result ^ line, i - 1)
+                | (true,false,_) => (result ^ line ^ "\n",true)
+                | (false,_,true) => (result ^ line ^ "\n", true) 
+                | _ => append (result ^ line ^ "\n", i - 1)
              
         end
-    val bytes_read = Reader.getBytes_read()
-    val offset = (Reader.getOffset ()) + bytes_read
+
     val (value,hasNext) = append ("",2)
     in
-        print ("MLOOP{" ^ value ^ "}\n");
         if hasNext then setKeyValue (Reader.get(),cstring (Int64.toString offset),cstring value)
         else ();
         hasNext
