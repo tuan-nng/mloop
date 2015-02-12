@@ -93,11 +93,11 @@ MloopRecordReader::MloopRecordReader(hp::MapContext& ctx) {
     fs = hdfsConnect("default", 0);
     file = hdfsOpenFile(fs, filename.substr(pos).c_str(), O_RDONLY,
             0, 0, 0);
-    //hdfsSeek(fs, file, offset);
     bytes_read = 0;
+    start = offset;
+    in = new LineReader(fs, file);
     reader_init((CPointer) this, (Int64) offset, (Int64) length);
     reader_setup();
-    printf("end of init...\n");
 }
 
 bool MloopRecordReader::next(std::string& key_, std::string& value_) {
@@ -107,7 +107,6 @@ bool MloopRecordReader::next(std::string& key_, std::string& value_) {
         value_ = *value;
         return true;
     }
-    printf("+++++++++END this split**********\n");
     return false;
 }
 
@@ -123,10 +122,11 @@ void MloopRecordReader::setKeyValue(std::string* k, std::string* val) {
 float MloopRecordReader::getProgress() {
     if (length == 0)
         return 0.0;
-    return MIN(1.0, (double) bytes_read / (double) length);
+    return MIN(1.0, (double) (start - offset) / (double) length);
 }
 
 uint64_t MloopRecordReader::getBytes_read() {
+    printf("getbRead\n");
     return bytes_read;
 }
 
@@ -143,6 +143,7 @@ uint64_t MloopRecordReader::getLength() {
 }
 
 uint64_t MloopRecordReader::getOffset() {
+    printf("getOffset\n");
     return offset;
 }
 
@@ -150,7 +151,32 @@ void MloopRecordReader::setBytes_read(uint64_t bytes) {
     bytes_read = bytes;
 }
 
-MloopRecordReader::~MloopRecordReader() {
+uint64_t MloopRecordReader::getStart() {
+    return start;                       
+}
+
+void MloopRecordReader::setStart(uint64_t start) {
+    this->start = start;
+}
+
+void MloopRecordReader::addStart(int bytesConsumed) {
+    this->start += bytesConsumed;
+}
+
+void MloopRecordReader::close() {
+    in->close();
     hdfsCloseFile(fs, file);
+    printf("Closed reader.\n");
+}
+
+
+MloopRecordReader::~MloopRecordReader() {
+    if (key) {
+        delete key;
+        delete value;
+    }
+    delete in;
+
+    printf("destroy reader...\n");
 }
 

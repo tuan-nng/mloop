@@ -26,6 +26,7 @@
 #include <hadoop/Pipes.hh>
 #include <stdio.h>
 #include "libhdfs/hdfs.h"
+#include "LineReader.hpp"
 
 namespace hu = HadoopUtils;
 namespace hp = HadoopPipes;
@@ -75,48 +76,19 @@ public:
 //  }
 //};
 //
-//struct wrap_record_reader: hp::RecordReader, bp::wrapper<hp::RecordReader>, cxx_capsule {
-//  bool next(std::string& key, std::string& value) {
-//    // t = (bool got_record, str key, str value)
-//    bp::tuple t = this->get_override("next")();
-//    if (!t[0]) {
-//      return false;
-//    }
-//    bp::extract<std::string> k(t[1]);
-//    if (k.check()) {
-//      key = k;
-//    } else {
-//      throw pipes_exception("RecordReader:: overloaded method is not returning a proper key.");
-//    }
-//    bp::extract<std::string> v(t[2]);
-//    if (v.check()) {
-//      value = v;
-//    } else {
-//      throw pipes_exception("RecordReader:: overloaded method is not returning a proper value.");
-//    }
-//    return true;
-//  }
-//  float getProgress() {
-//    return this->get_override("getProgress")();
-//  }
-//  void close() {
-//    this->get_override("close")();
-//  }
-//  virtual ~wrap_record_reader() {
-//    DESTROY_PYTHON_TOO(wrap_record_reader);
-//  }
-//};
 
 class MloopRecordReader : public hp::RecordReader {
 private:
     hdfsFS fs;
     hdfsFile file;
     uint64_t offset;
+    uint64_t start;
     uint64_t length;
     uint64_t bytes_read;
     std::string* key;
     std::string* value;
 public:
+    LineReader* in;
     MloopRecordReader(hp::MapContext& ctx);
     bool next(std::string& key, std::string& value);
     float getProgress();
@@ -126,8 +98,12 @@ public:
     uint64_t getLength();
     uint64_t getBytes_read();
     void setBytes_read(uint64_t bytes);
+    uint64_t getStart();
+    void setStart(uint64_t start);
+    void addStart(int bytesConsumed);
     void setKeyValue(std::string* key, std::string* value);
-    ~MloopRecordReader();
+    virtual void close();
+    virtual ~MloopRecordReader();
 };
 //
 //struct wrap_record_writer: hp::RecordWriter, bp::wrapper<hp::RecordWriter>, cxx_capsule {
