@@ -20,6 +20,7 @@ using std::string;
 #define BATCH_READ 10000
 
 namespace hu = HadoopUtils;
+using namespace HadoopPipes;
 
 MloopMapper::MloopMapper(hp::MapContext& ctx) {
     printf("init mapper\n");
@@ -69,9 +70,9 @@ MloopCombiner::MloopCombiner(hp::MapContext& ctx) {
 }
 
 void MloopCombiner::reduce(hp::ReduceContext& ctx) {
-        hp::ReduceContext* ptr = &ctx;
-        std::string key = ctx.getInputKey();     
-        mloop_combine_((CPointer) ptr, (CPointer) key.c_str());
+    hp::ReduceContext* ptr = &ctx;
+    std::string key = ctx.getInputKey();
+    mloop_combine_((CPointer) ptr, (CPointer) key.c_str());
 }
 
 void MloopCombiner::close() {
@@ -89,15 +90,16 @@ MloopRecordReader::MloopRecordReader(hp::MapContext& ctx) {
     offset = is.readLong();
     length = is.readLong();
     int pos = filename.find('/', 7);
-    printf("Filename: %s, Offset: %ld, length: %ld \n", filename.c_str(), offset, length);
+    printf("Filename: %s, Offset: %ld, end: %ld \n", filename.c_str(), offset, length + offset);
     fs = hdfsConnect("default", 0);
     file = hdfsOpenFile(fs, filename.substr(pos).c_str(), O_RDONLY,
             0, 0, 0);
     bytes_read = 0;
     start = offset;
     in = new LineReader(fs, file);
+    newLine = NULL;
     reader_init((CPointer) this, (Int64) offset, (Int64) length);
-    reader_setup();
+        reader_setup();
 }
 
 bool MloopRecordReader::next(std::string& key_, std::string& value_) {
@@ -111,7 +113,7 @@ bool MloopRecordReader::next(std::string& key_, std::string& value_) {
 }
 
 void MloopRecordReader::setKeyValue(std::string* k, std::string* val) {
-    if (key) {
+    if (key != NULL) {
         delete key;
         delete value;
     }
@@ -126,7 +128,6 @@ float MloopRecordReader::getProgress() {
 }
 
 uint64_t MloopRecordReader::getBytes_read() {
-    printf("getbRead\n");
     return bytes_read;
 }
 
@@ -143,7 +144,6 @@ uint64_t MloopRecordReader::getLength() {
 }
 
 uint64_t MloopRecordReader::getOffset() {
-    printf("getOffset\n");
     return offset;
 }
 
@@ -152,7 +152,7 @@ void MloopRecordReader::setBytes_read(uint64_t bytes) {
 }
 
 uint64_t MloopRecordReader::getStart() {
-    return start;                       
+    return start;
 }
 
 void MloopRecordReader::setStart(uint64_t start) {
@@ -163,20 +163,60 @@ void MloopRecordReader::addStart(int bytesConsumed) {
     this->start += bytesConsumed;
 }
 
+char*& MloopRecordReader::getNewLine() {
+    return newLine;
+}
+
 void MloopRecordReader::close() {
     in->close();
     hdfsCloseFile(fs, file);
+    if (newLine != NULL)
+        delete []newLine;
     printf("Closed reader.\n");
 }
 
-
 MloopRecordReader::~MloopRecordReader() {
-    if (key) {
+    if (key != NULL) {
         delete key;
         delete value;
     }
     delete in;
-
     printf("destroy reader...\n");
 }
+
+MloopRecordWriter::MloopRecordWriter(hp::ReduceContext& ctx) {
+    setenv("CLASSPATH", get_hadoop_classpath("/home/hadoop-2.2.0"), 1);
+    const JobConf* conf = ctx.getJobConf();
+    string out_dir = conf->get("mapreduce.output.fileoutputformat.outputdir");
+    int pos = out_dir.find('/', 7);
+    out_dir = out_dir.substr(pos);
+    int part = conf->getInt("mapred.task.partition");
+    char s[200];
+    sprintf(s, "%s/part-%.5d", out_dir.c_str(), part);
+    fs = hdfsConnect("default", 0);
+    file = hdfsOpenFile(fs, s, O_WRONLY | O_CREAT,
+            0, 0, 0);
+    string sep("\t");
+    if (conf->hasKey("mapred.textoutputformat.separator"))
+        sep = conf->get("mapred.textoutputformat.separator");
+    writer = new LineWriter(fs, file, sep);
+    writer_init((CPointer) this);
+}
+
+LineWriter* MloopRecordWriter::getWriter() {
+    return writer;
+}
+
+void MloopRecordWriter::emit(const std::string& key, const std::string& value) {
+    mloop_write((CPointer) key.c_str(), (CPointer) value.c_str());
+}
+
+void MloopRecordWriter::close() {
+    hdfsCloseFile(fs, file);
+}
+
+MloopRecordWriter::~MloopRecordWriter() {
+    delete writer;
+}
+
 

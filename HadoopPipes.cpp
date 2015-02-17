@@ -6,11 +6,13 @@
 #include "pipes.hpp"
 #include <cstring>
 #include <string>
+#include <string.h>
 #include "LineReader.hpp"
+#include <vector>
 
 namespace hp = HadoopPipes;
 using namespace hp;
-using std::string;
+using namespace std;
 
 #define BUFF_SIZE 1000
 extern "C" {
@@ -30,6 +32,8 @@ extern "C" {
     void context_emit(CPointer taskContext, CPointer key, CPointer value) {
         TaskContext* context = (TaskContext*) taskContext;
         std::string k((char*) key), v((char*) value);
+        if (k.find("#endothelioma#") == 0)
+            printf("value of #endo is %s\n", (char*) value);
         context->emit(k, v);
     }
 
@@ -72,64 +76,23 @@ extern "C" {
 
     CPointer readInputSplitLine(CPointer reader_) {
         MloopRecordReader* reader = (MloopRecordReader*) reader_;
-        //hdfsFile file = reader->getFile();
-        //hdfsFS fs = reader->getFs();
-        //uint64_t off = reader->getOffset();
-        //uint64_t bRead = (bytes_read > reader->getLength()) ? reader->getLength() : bytes_read;
-        //printf("Offset: %ld, bytes read: %ld    \n", off, bRead);
-        //        char* buffer = new char[BUFF_SIZE];
-        //        hdfsSeek(fs, file, off + bRead);
-        //        tSize t = 1;
-        //        uint64_t len = 0;
-        //        bool firstRead = true;
-        //        while (t > 0) {
-        //            t = hdfsRead(fs, file, buffer, BUFF_SIZE);                                                                                                                                                                                                                                                                                                          
-        //            if (t == 0)
-        //                break;
-        //            char* ptr = strchr(buffer, '\0');
-        //            if (!ptr || ptr - buffer >= BUFF_SIZE)
-        //                ptr = strchr(buffer, '\n');
-        //            if (!ptr || ptr - buffer >= BUFF_SIZE)
-        //                ptr = strchr(buffer, '\r');
-        //            if (ptr != NULL && ptr - buffer < BUFF_SIZE) {
-        //                len += ptr - buffer + 1; // read also the end of line
-        //                if (firstRead) { // return current result;
-        //                    string val("");
-        //                    val.assign(buffer, len);
-        //                    reader->setBytes_read(bRead + len);
-        //                    delete [] buffer;
-        //                    reader_setBytesRead((Int64) bRead + len);
-        //                    return (CPointer) val.c_str();
-        //                }
-        //                break;
-        //            } else len += t;
-        //            firstRead = false;
-        //        }
-        //        delete [] buffer;
-        //        if (len == 0) {
-        //            if (t == 0) return NULL;
-        //            else {
-        //                std::string empty("");
-        //                return (CPointer) empty.c_str();
-        //            }
-        //        }
-        //        buffer = new char[len + 1];
-        //        hdfsSeek(fs, file, off + bRead);
-        //        hdfsRead(fs, file, buffer, len);
-        //        buffer[len] = '\0';
-        //        string val("");
-        //        val.assign(buffer, len + 1);
-        //        reader->setBytes_read(bRead + len);
-        //        delete [] buffer;
-        //        reader_setBytesRead((Int64) bRead + len);
-        //        return (CPointer) val.c_str();
-        string val("");
+        char* newline = reader->getNewLine();
         LineReader* lineReader = reader->in;
-        int bytesConsumed = lineReader->readLine(val);
+        int bytesConsumed = lineReader->readLine(newline);
         reader->addStart(bytesConsumed);
-        //printf("Current offset: %ldBytes consumed = %d\n", reader->getStart(), bytesConsumed);
+        //printf("offset: %ld, consumed = %d\n", reader->getStart(), bytesConsumed);
         reader_updateOffset_bytesConsumed((Int64) reader->getStart(), (Int64) bytesConsumed);
-        return (CPointer) val.c_str();
+
+        //        if (new.length() == 0)
+        //            return (CPointer) val.c_str();
+        //        char* v = new char[val.length() + 1];
+        //        strcpy(v, val.c_str());
+        //        v[val.length()] = '\0';
+        //        lineReader->setLine(v); // delete old string
+        //return (CPointer) v;
+        //printf("%s\n", newline);
+        return (CPointer) newline;
+
     }
 
     void seekHdfs(CPointer reader_, Int64 pos) {
@@ -142,8 +105,16 @@ extern "C" {
 
     void setKeyValue(CPointer reader_, CPointer key, CPointer value) {
         MloopRecordReader* reader = (MloopRecordReader*) reader_;
-        std::string* k = new string((char*) key);
-        std::string* v = new string((char*) value);
+        string* k = new string((char*) key);
+        string* v = new string((char*) value);
         reader->setKeyValue(k, v);
+    }
+
+    void writer_write(CPointer writer_, CPointer key_, CPointer value_) {
+        MloopRecordWriter* record_writer = (MloopRecordWriter*) writer_;
+        string key((char*) key_);
+        string value((char*) value_);
+        LineWriter* writer = record_writer->getWriter();
+        writer->write(key, value);
     }
 }

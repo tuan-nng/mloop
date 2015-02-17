@@ -3,24 +3,30 @@ fun mloop_map (key:string, value:string) =
     let
         val splitter = String.tokens(fn c => Char.isSpace c)
         val words = splitter value
-        
+        fun toInt number = let 
+            val x = IntInf.fromString number
+            in 
+                Option.getOpt(x,0)
+            end
+        fun sum (from:IntInf.int,to:IntInf.int, result:IntInf.int) = if from > to then result
+            else sum (from + 1, to, result + from);
+        val v = sum (toInt (List.nth(words,0)), toInt (List.nth(words,1)), 0);
     in   
-        map (fn word => MapContext.emit (word,"1")) words;
-        ()
+        MapContext.emit ("", IntInf.toString v)
     end
 
 fun mloop_reduce (key:string)=
     let
         fun fromString str = let 
-            val x = Int.fromString str
+            val x = IntInf.fromString str
             in 
                 Option.getOpt(x,0)
             end
-        val sum = ref 0
+        val sum = ref 0 : IntInf.int ref
     in
         while (ReduceContext.nextValue()) do
             sum := (!sum) + (fromString (ReduceContext.getInputValue()));
-        ReduceContext.emit(key, Int.toString(!sum))
+        ReduceContext.emit(key, IntInf.toString(!sum))
     end
 
 fun mloop_combine (key:string) = 
@@ -61,4 +67,4 @@ val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t  -> unit) -
 val _ = c (fn (address, key) => mloop_combine_ (address, key))
 
 val runTask = _import "runTask" public: bool*bool*bool -> int;
-val v = runTask (false, true, false)
+val v = runTask (false, false, false)

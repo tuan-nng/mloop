@@ -1,13 +1,18 @@
 #include "LineReader.hpp"
 #include "export.h"
-#include <sys/param.h>
 #include <stdio.h>
+#include <cstring>
+
+#define DEFAULT_BUFF_SIZE 128 * 1024
+#define MAX_LEN 2 * 1024 * 1024
+#define MIN(a,b) (((a)<(b)) ? a : b)
 
 LineReader::LineReader(hdfsFS fs_, hdfsFile file_) {
     this->fs = fs_;
     this->file = file_;
     this->bufferSize = DEFAULT_BUFF_SIZE;
     this->buffer = new char[bufferSize];
+    this->line = NULL;
     bufferLen = bufferPosn = 0;
 }
 
@@ -17,13 +22,15 @@ bool LineReader::backfill() {
     return (bufferLen > 0);
 }
 
-int LineReader::readLine(string& str, int maxLineLength, int maxBytesToConsume) {
-    str.clear();
+int LineReader::readLine(char* &str, int maxLineLength, int maxBytesToConsume) {
     bool hadFinalNewline = false;
     bool hadFinalReturn = false;
     bool hitEndofFile = false;
     int startPosn = bufferPosn;
     long bytesConsumed = 0;
+    vector<char> temp;
+    temp.reserve(500);
+    int lineLen = 0;
     while (true) {
         if (bufferPosn >= bufferLen) {
             if (!backfill()) {
@@ -53,37 +60,73 @@ int LineReader::readLine(string& str, int maxLineLength, int maxBytesToConsume) 
         // only go here when \r at the end of buffer or not find \n,\r
         bytesConsumed += bufferPosn - startPosn;
         int length = bufferPosn - startPosn - (hadFinalReturn ? 1 : 0);
-        length = MIN(length, maxLineLength - str.length());
-        if (length >= 0)
-            str.append(buffer, startPosn, length);
-        if (bytesConsumed >= maxBytesToConsume)
-            return (int) MIN(bytesConsumed, (long) INT32_MAX);
+        length = MIN(length, maxLineLength - lineLen);
+        if (length > 0) {
+            lineLen += length;
+            for (int i = 0; i < length; i++)
+                temp.push_back(buffer[startPosn + i]);
+        }
+        if (bytesConsumed >= maxBytesToConsume) {
+            if (str != NULL)
+                delete []str;
+            str = new char[lineLen + 1];
+            str[lineLen] = '\0';
+            for (int i = 0; i < lineLen; i++) {
+                str[i] = temp[i];
+            }
+            return (int) MIN(bytesConsumed, (long) MAX_LEN);
+        }
     }
 end_while:
     int newLineLength = (hadFinalNewline ? 1 : 0) + (hadFinalReturn ? 1 : 0);
     if (!hitEndofFile) {
         bytesConsumed += bufferPosn - startPosn;
         int length = bufferPosn - startPosn - newLineLength;
-        length = (int) MIN(length, maxLineLength - str.length());
-        if (length > 0)
-            str.append(buffer, startPosn, length);
+        length = (int) MIN(length, maxLineLength - lineLen);
+        if (length > 0) {
+            lineLen += length;
+            for (int i = 0; i < length; i++)
+                temp.push_back(buffer[startPosn + i]);
+        }
     }
-    return (int) MIN(bytesConsumed, (long) INT32_MAX);
+
+    if (str != NULL)
+        delete []str;
+    str = new char[lineLen + 1];
+    str[lineLen] = '\0';
+    for (int i = 0; i < lineLen; i++) {
+        str[i] = temp[i];
+    }
+    
+    return (int) MIN(bytesConsumed, (long) MAX_LEN);
 }
 
-int LineReader::readLine(string& str, int maxLineLength) {
-    return readLine(str, maxLineLength, INT32_MAX);
+int LineReader::readLine(char* &str, int maxLineLength) {
+    return readLine(str, maxLineLength, MAX_LEN);
 }
 
-int LineReader::readLine(string& str) {
-    return readLine(str, INT32_MAX, INT32_MAX);
+int LineReader::readLine(char* &str) {
+    return readLine(str, MAX_LEN, MAX_LEN);
+}
+
+char* LineReader::getLine() {
+    return line;
+}
+
+void LineReader::setLine(char* l) {
+    if (line != NULL) {
+        delete []line;
+    }
+    this->line = l;
 }
 
 void LineReader::close() {
-    printf("delete buffer\n");
     delete buffer;
+    if (line != NULL) {
+        delete []line;
+        line = NULL;
+    }
 }
 
 LineReader::~LineReader() {
-    printf("fucking shit.\n");
 }

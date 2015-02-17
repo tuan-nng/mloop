@@ -22,11 +22,12 @@
 
 #include <string>
 
-#include <hadoop/SerialUtils.hh>
-#include <hadoop/Pipes.hh>
+#include "hadoop/SerialUtils.hh"
+#include "hadoop/Pipes.hh"
 #include <stdio.h>
 #include "libhdfs/hdfs.h"
 #include "LineReader.hpp"
+#include "LineWriter.hpp"
 
 namespace hu = HadoopUtils;
 namespace hp = HadoopPipes;
@@ -87,6 +88,7 @@ private:
     uint64_t bytes_read;
     std::string* key;
     std::string* value;
+    char* newLine;
 public:
     LineReader* in;
     MloopRecordReader(hp::MapContext& ctx);
@@ -102,8 +104,26 @@ public:
     void setStart(uint64_t start);
     void addStart(int bytesConsumed);
     void setKeyValue(std::string* key, std::string* value);
+    char*& getNewLine();
     virtual void close();
     virtual ~MloopRecordReader();
+};
+
+class MloopRecordWriter : public hp::RecordWriter{
+private:
+    hdfsFS fs;
+    hdfsFile file;
+    LineWriter* writer;
+public:
+    MloopRecordWriter(){}
+    MloopRecordWriter(hp::ReduceContext& ctx);
+    LineWriter* getWriter();
+    virtual void close();
+
+    virtual void emit(const std::string& key, const std::string& value);
+
+    virtual ~MloopRecordWriter();
+
 };
 //
 //struct wrap_record_writer: hp::RecordWriter, bp::wrapper<hp::RecordWriter>, cxx_capsule {
@@ -175,6 +195,9 @@ public:
     }
 
     hp::RecordWriter* createRecordWriter(hp::ReduceContext& ctx) const {
+        printf("Trying to create writer...\n");
+        if (writer)
+            return new MloopRecordWriter(ctx);
         return NULL;
     }
 

@@ -10,12 +10,12 @@
 
 #include <string>
 #include "libhdfs/hdfs.h"
+#include <vector>
 
 
 #include <stdio.h>
 
-#define DEFAULT_BUFF_SIZE 64 * 1024
-using std::string;
+using namespace std;
 
 class LineReader {
 private:
@@ -27,12 +27,16 @@ private:
     int bufferPosn;
     hdfsFS fs;
     hdfsFile file;
+    char* line;
+    string bufferStr;
 public:
     LineReader(hdfsFS fs, hdfsFile file);
     bool backfill();
-    int readLine(string& str,int maxLineLength, int maxBytesToConsume);
-    int readLine(string& str,int maxLineLength);
-    int readLine(string& str);
+    int readLine(char* &str,int maxLineLength, int maxBytesToConsume);
+    int readLine(char* &str,int maxLineLength);
+    int readLine(char* &str);
+    char* getLine();
+    void setLine(char* l);
     void close();
     ~LineReader();
 };

@@ -29,6 +29,8 @@ extern "C" {
     void seekHdfs(CPointer reader, Int64 pos);
     void setKeyValue(CPointer reader, CPointer key, CPointer value);
 
+    void writer_write(CPointer writer, CPointer key, CPointer value);
+    void writer_setSep(CPointer writer, CPointer sep);
 #ifdef	__cplusplus
 }
 #endif
