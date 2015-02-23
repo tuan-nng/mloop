@@ -15,6 +15,10 @@ val seekHdfs = _import "seekHdfs" public : MLton.Pointer.t * Int64.int -> unit;
 
 val writer_write = _import "writer_write" public : MLton.Pointer.t * string * string -> unit;
 
+val runTask = _import "runTask" public: bool*bool*bool -> int;
+
+fun mloop_combine key = ()
+
 fun strlen p =
    let
       fun loop i =

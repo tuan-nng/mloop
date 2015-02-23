@@ -17,6 +17,8 @@ fi
 cat mloop_.mlb > mloop.mlb
 echo "$1" >> mloop.mlb
 
+echo "export-ffi.sml" >> mloop.mlb
+
 if [ "$2" = "export" ]; then
   mlton -default-ann 'allowFFI true' -export-header export.h -stop tc mloop.mlb
 else
