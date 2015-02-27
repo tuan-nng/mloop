@@ -77,7 +77,8 @@ void MloopCombiner::close() {
 //Record Reader
 
 MloopRecordReader::MloopRecordReader(hp::MapContext& ctx) {
-    setenv("CLASSPATH", get_hadoop_classpath("/home/hadoop-2.2.0"), 1);
+    char* home = getenv("HADOOP_HOME");
+    setenv("CLASSPATH", get_hadoop_classpath(home), 1);
     key = value = NULL;
     string split = ctx.getInputSplit();
     _StringInStream is(split);
@@ -180,7 +181,8 @@ MloopRecordReader::~MloopRecordReader() {
 }
 
 MloopRecordWriter::MloopRecordWriter(hp::ReduceContext& ctx) {
-    setenv("CLASSPATH", get_hadoop_classpath("/home/hadoop-2.2.0"), 1);
+    char* home = getenv("HADOOP_HOME");
+    setenv("CLASSPATH", get_hadoop_classpath(home), 1);
     const JobConf* conf = ctx.getJobConf();
     string out_dir = conf->get("mapreduce.output.fileoutputformat.outputdir");
     int pos = out_dir.find('/', 7);
