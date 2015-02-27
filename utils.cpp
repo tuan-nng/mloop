@@ -7,6 +7,26 @@
 #include "pipes.hpp"
 #include <hadoop/Pipes.hh>
 #include "export.h"
+#include <dirent.h>
+#include <cstring>
+
+void listFiles(const char* folder, string& files) {
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(folder)) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            const char* name = ent->d_name;
+            const char* pch = strstr(name, ".jar");
+            if (pch != NULL) {
+                files.append(folder);
+                files.append(name);
+                files.append(":");
+            }
+        }
+        closedir(dir);
+    }
+
+}
 
 extern "C" {
 
@@ -36,7 +56,13 @@ extern "C" {
     }
 
     const char* get_hadoop_classpath(const char* hadoop_home) {
-        return "/home/hadoop-2.2.0/share/hadoop/hdfs/hadoop-hdfs-2.2.0-tests.jar:/home/hadoop-2.2.0/share/hadoop/hdfs/hadoop-hdfs-nfs-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/hdfs/hadoop-hdfs-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/common/hadoop-common-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/common/hadoop-common-2.2.0-tests.jar:/home/hadoop-2.2.0/share/hadoop/common/hadoop-nfs-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/paranamer-2.3.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jaxb-impl-2.2.3-1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jsp-api-2.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jackson-core-asl-1.8.8.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/servlet-api-2.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/slf4j-log4j12-1.7.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/guava-11.0.2.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jetty-6.1.26.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-httpclient-3.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/stax-api-1.0.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jersey-json-1.9.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/xmlenc-0.52.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-beanutils-core-1.8.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jackson-xc-1.8.8.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/slf4j-api-1.7.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-digester-1.8.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jasper-runtime-5.5.23.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/xz-1.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-math-2.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jetty-util-6.1.26.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/zookeeper-3.4.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-configuration-1.6.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/hadoop-annotations-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/snappy-java-1.0.4.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jets3t-0.6.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-logging-1.1.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-net-3.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-collections-3.2.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/avro-1.7.4.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-beanutils-1.7.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/netty-3.6.2.Final.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/mockito-all-1.8.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/asm-3.2.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-io-2.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jersey-core-1.9.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jackson-jaxrs-1.8.8.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jackson-mapper-asl-1.8.8.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jettison-1.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-lang-2.5.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jasper-compiler-5.5.23.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-compress-1.4.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jsch-0.1.42.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/log4j-1.2.17.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/junit-4.8.2.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jersey-server-1.9.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jsr305-1.3.9.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/hadoop-auth-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-el-1.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/protobuf-java-2.5.0.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-codec-1.4.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/jaxb-api-2.2.2.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/activation-1.1.jar:/home/hadoop-2.2.0/share/hadoop/common/lib/commons-cli-1.2.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-2.2.0-tests.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-hs-plugins-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-common-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-hs-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-core-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-shuffle-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-client-app-2.2.0.jar:/home/hadoop-2.2.0/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.2.0.jar:/home/hadoop-2.2.0/lib/native::/home/hadoop-2.2.0/etc/hadoop";
+        string files("");
+        string location(hadoop_home);
+        listFiles((location + "/share/hadoop/hdfs/").c_str(), files);
+        listFiles((location + "/share/hadoop/common/").c_str(), files);
+        listFiles((location + "/share/hadoop/common/lib/").c_str(), files);
+        listFiles((location + "/share/hadoop/mapreduce/").c_str(), files);
+        return files.c_str();
     }
 
     int runTask(Bool combine, Bool reader, Bool writer) {

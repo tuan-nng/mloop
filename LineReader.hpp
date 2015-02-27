@@ -27,7 +27,6 @@ private:
     int bufferPosn;
     hdfsFS fs;
     hdfsFile file;
-    char* line;
     string bufferStr;
 public:
     LineReader(hdfsFS fs, hdfsFile file);
@@ -35,8 +34,6 @@ public:
     int readLine(char* &str,int maxLineLength, int maxBytesToConsume);
     int readLine(char* &str,int maxLineLength);
     int readLine(char* &str);
-    char* getLine();
-    void setLine(char* l);
     void close();
     ~LineReader();
 };

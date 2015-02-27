@@ -12,7 +12,6 @@ LineReader::LineReader(hdfsFS fs_, hdfsFile file_) {
     this->file = file_;
     this->bufferSize = DEFAULT_BUFF_SIZE;
     this->buffer = new char[bufferSize];
-    this->line = NULL;
     bufferLen = bufferPosn = 0;
 }
 
@@ -109,23 +108,9 @@ int LineReader::readLine(char* &str) {
     return readLine(str, MAX_LEN, MAX_LEN);
 }
 
-char* LineReader::getLine() {
-    return line;
-}
-
-void LineReader::setLine(char* l) {
-    if (line != NULL) {
-        delete []line;
-    }
-    this->line = l;
-}
 
 void LineReader::close() {
     delete buffer;
-    if (line != NULL) {
-        delete []line;
-        line = NULL;
-    }
 }
 
 LineReader::~LineReader() {

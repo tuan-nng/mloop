@@ -32,8 +32,6 @@ extern "C" {
     void context_emit(CPointer taskContext, CPointer key, CPointer value) {
         TaskContext* context = (TaskContext*) taskContext;
         std::string k((char*) key), v((char*) value);
-        if (k.find("#endothelioma#") == 0)
-            printf("value of #endo is %s\n", (char*) value);
         context->emit(k, v);
     }
 
@@ -53,15 +51,15 @@ extern "C" {
         return (CPointer) value.c_str();
     }
 
-    CPointer reduceContext_getValueSet(CPointer reduceContext) {
-        ReduceContext* context = (ReduceContext*) reduceContext;
-        int size = 0;
-        while (context->nextValue()) {
-            std::string value = context->getInputValue();
-            size++;
-        }
-        return NULL;
-    }
+    //    CPointer reduceContext_getValueSet(CPointer reduceContext) {
+    //        ReduceContext* context = (ReduceContext*) reduceContext;
+    //        int size = 0;
+    //        while (context->nextValue()) {
+    //            std::string value = context->getInputValue();
+    //            size++;
+    //        }
+    //        return NULL;
+    //    }
 
     int32_t reduceContext_nextValue(CPointer reduceContext) {
         ReduceContext* context = (ReduceContext*) reduceContext;
@@ -80,17 +78,7 @@ extern "C" {
         LineReader* lineReader = reader->in;
         int bytesConsumed = lineReader->readLine(newline);
         reader->addStart(bytesConsumed);
-        //printf("offset: %ld, consumed = %d\n", reader->getStart(), bytesConsumed);
         reader_updateOffset_bytesConsumed((Int64) reader->getStart(), (Int64) bytesConsumed);
-
-        //        if (new.length() == 0)
-        //            return (CPointer) val.c_str();
-        //        char* v = new char[val.length() + 1];
-        //        strcpy(v, val.c_str());
-        //        v[val.length()] = '\0';
-        //        lineReader->setLine(v); // delete old string
-        //return (CPointer) v;
-        //printf("%s\n", newline);
         return (CPointer) newline;
 
     }

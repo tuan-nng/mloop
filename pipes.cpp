@@ -8,7 +8,6 @@
 #include "hadoop/SerialUtils.hh"
 #include <sstream>
 #include "pipes_serial_utils.hpp"
-#include "hdfs_fs.h"
 #include "utils.h"
 #include <stdlib.h>
 
@@ -45,7 +44,6 @@ MloopMapper::~MloopMapper() {
 // Reducer
 
 MloopReducer::MloopReducer(hp::ReduceContext& ctx) {
-    printf("init reducer\n");
     hp::ReduceContext* ptr = &ctx;
     init_reduce((CPointer) ptr);
 }
@@ -65,8 +63,6 @@ MloopReducer::~MloopReducer() {
 // Combiner
 
 MloopCombiner::MloopCombiner(hp::MapContext& ctx) {
-
-    printf("init combiner\n");
 }
 
 void MloopCombiner::reduce(hp::ReduceContext& ctx) {
@@ -90,7 +86,7 @@ MloopRecordReader::MloopRecordReader(hp::MapContext& ctx) {
     offset = is.readLong();
     length = is.readLong();
     int pos = filename.find('/', 7);
-    printf("Filename: %s, Offset: %ld, end: %ld \n", filename.c_str(), offset, length + offset);
+    
     fs = hdfsConnect("default", 0);
     file = hdfsOpenFile(fs, filename.substr(pos).c_str(), O_RDONLY,
             0, 0, 0);
@@ -181,7 +177,6 @@ MloopRecordReader::~MloopRecordReader() {
         delete value;
     }
     delete in;
-    printf("destroy reader...\n");
 }
 
 MloopRecordWriter::MloopRecordWriter(hp::ReduceContext& ctx) {

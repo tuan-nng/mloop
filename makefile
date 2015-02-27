@@ -1,12 +1,12 @@
 all: shadoop
 
-main: main.o hdfs_fs.o utils.o hdfs_common.o jni_helper.o hdfs.o exception.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o
-	g++ -g -L/usr/lib/jvm/java-7-oracle/jre/lib/amd64/server -L/usr/bin/java -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux main.o hdfs_fs.o utils.o hdfs_common.o jni_helper.o hdfs.o exception.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o -o main -luuid -ljvm -lpthread -lcrypto
+main: main.o SerialUtils.o StringUtils.o
+	g++ -g -L/usr/lib/jvm/java-7-oracle/jre/lib/amd64/server -L/usr/bin/java -L/home/hadoop-2.2.0/lib/native -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux main.o SerialUtils.o StringUtils.o -o main -luuid -ljvm -lpthread -lcrypto
 	
 shadoop: shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o
 	g++ shadoop.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o  -o shadoop -luuid -lpthread -lcrypto
 	
-mloop: serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o hdfs_fs.o LineReader.o LineWriter.o
+mloop: serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o LineReader.o LineWriter.o
 	
 shadoop.o: shadoop.c
 	gcc -c shadoop.c 
@@ -17,8 +17,8 @@ utils.o: utils.cpp
 pipes.o: pipes.cpp
 	g++ -c pipes.cpp -I./
 
-main.o: main.c
-	gcc -g -c main.c -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux
+main.o: main.cpp
+	g++ -g -c main.cpp -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux
 
 hdfs_fs.o: hdfs_fs.cpp
 	g++ -c hdfs_fs.cpp -I/usr/lib/jvm/java-7-oracle/include -I/usr/lib/jvm/java-7-oracle/include/linux 

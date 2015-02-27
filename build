@@ -23,7 +23,7 @@ if [ "$2" = "export" ]; then
   mlton -default-ann 'allowFFI true' -export-header export.h -stop tc mloop.mlb
 else
   make mloop
-  mlton -default-ann 'allowFFI true' -link-opt '-L/home/hadoop-2.2.0/lib/native -luuid -lstdc++ -lpthread -lcrypto -lhdfs' mloop.mlb serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o hdfs_fs.o LineReader.o LineWriter.o
+  mlton -default-ann 'allowFFI true' -link-opt '-L/home/hadoop-2.2.0/lib/native -luuid -lstdc++ -lpthread -lcrypto -lhdfs' mloop.mlb serial.o utils.o pipes.o HadoopPipes.o SerialUtils.o StringUtils.o HadoopPipes_cpp.o LineReader.o LineWriter.o
 fi
 
 
