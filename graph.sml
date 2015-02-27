@@ -12,51 +12,68 @@ end
 
 val maxInt = Option.getOpt(Int.maxInt,1000000000)
 
+(* info = EDGES|DISTANCE_FROM_SOURCE|COLOR| *)
+fun unpackInfo info = let 
+  val tmp = split (info,#"|")
+  val valid2 = if List.length tmp = 3 then true else raise Fail("Invalid info.")
+  val e::d::c::_ = tmp
+in 
+  (e,d,c)
+end 
+
+(* str = ID    EDGES|DISTANCE_FROM_SOURCE|COLOR| *)
 fun unpack str = let
-  val k::v::_ = tokens str
-  val e::d::c::_ = split (v,#"|")
-  val dist = case (Int.fromString d) of SOME t => t | NONE => maxInt
-  val edge_list = if e = "NULL" then [] else split (e,#",")
+  val tmp = tokens str
+  val valid = if List.length tmp = 2 then true else raise Fail("Invalid key-value.")
+  val k::v::_ = tmp
 in
-  {id=k,edges=edge_list,distance=dist,color=c}
+  (k, unpackInfo v)
 end
 
 fun pack {id=k:string,edges=e:string list,distance=d:int,color=c:string} = (join (e,",")) ^ "|" ^ (Int.toString d) ^ "|" ^ c
 fun newNode (identity,e, dist,c) = {id=identity,edges=e,distance=dist,color=c}
 
-fun printNode node = MapContext.emit ((#id node), pack node)
-fun reduceNode node = ReduceContext.emit ((#id node), pack node)
+fun printNode (id, edges, dist, color) = MapContext.emit (id, edges ^ "|" ^ dist ^ "|" ^ color)
+fun reduceNode (id, edges, dist, color) = ReduceContext.emit (id, edges ^ "|" ^ dist ^ "|" ^ color)
 
 fun mloop_map (key,value) = let
-  val {id=i,edges=e,distance=dist,color=c} = unpack value
+  val (id,(edges,dist,color)) = unpack value
+  fun increaseDist dist = case (Int.fromString dist) of SOME t => Int.toString(t+1) | NONE => "Integer.MAX_VALUE"
+  fun parseEdges e = if e = "NULL" then [] else split (e,#",")
  in
-  if c = "GRAY" then (
-	map (fn id => printNode (newNode(id,["NULL"], dist + 1, c))) e;
-	printNode (newNode(i, e, dist, "BLACK"))
+  if color = "GRAY" then (
+	map (fn k => printNode (k,"NULL",(increaseDist dist),color)) (parseEdges edges);
+	printNode (id, edges,dist,"BLACK")
 	)
    else 
-  printNode {id=i,edges=e,distance=dist,color=c}
+  printNode (id,edges,dist,color)
 end
-
-fun maxColor (_, "BLACK") = "BLACK"
-  | maxColor ("BLACK", _ ) = "BLACK"
-  | maxColor ("GRAY", _) = "GRAY"
-  | maxColor (_, "GRAY") = "GRAY"
-  | maxColor (_,_) = "WHITE"
 
 fun mloop_reduce (key:string) = let
-  val dist = ref maxInt
+  val dist = ref "Integer.MAX_VALUE"
   val colour = ref "WHITE"
-  val edge = ref [] : string list ref
-  fun update node = (if not ((#edges node) = []) then edge:=(#edges node) else ();
-            if (#distance node) < (!dist) then dist:=(#distance node) else ();
-            colour := maxColor(!colour,#color node))
+  val edge = ref "NULL"
+  fun colorInt color = case color of "WHITE" => 0 | "GRAY" => 1 | "BLACK" => 2 | _ => ~1
+  fun maxColor (c1, c2) = let
+	  val v1 = colorInt c1
+	  val v2 = colorInt c2
+    in
+	  if v1 < v2 then c2 else c1
+  end
+  fun minDist (d1, d2) = let 
+	val v1 = case (Int.fromString d1) of SOME t => t | NONE => maxInt
+	val v2 = case (Int.fromString d2) of SOME t => t | NONE => maxInt
+  in
+	if v1 < v2 then d1 else d2
+  end
+  fun update (edges:string,distance:string,color:string) = (if not (edges = "NULL") then edge:=edges else ();
+            dist:= minDist (!dist, distance);
+            colour := maxColor(!colour,color))
  in
     while (ReduceContext.nextValue()) do
-        update (unpack (key ^ " " ^ (ReduceContext.getInputValue())));
-    reduceNode {id=key,edges=(!edge),distance=(!dist),color=(!colour)}
+        update (unpackInfo (ReduceContext.getInputValue()));
+    reduceNode (key,!edge,!dist,!colour)
 end
-
   
 
 
