@@ -26,3 +26,4 @@ fun mloop_reduce (key:string)=
 fun mloop_combine (key:string) = 
     mloop_reduce (key)
 
+val useCombiner = true

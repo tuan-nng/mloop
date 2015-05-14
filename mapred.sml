@@ -19,6 +19,13 @@ val runTask = _import "runTask" public: bool*bool*bool -> int;
 
 fun mloop_combine key = ()
 
+fun mloop_read () = true
+fun mloop_write (key, value) = ()
+fun setUpReader () = ()
+val useCombiner = false
+val useReader = false
+val useWriter = false
+
 fun strlen p =
    let
       fun loop i =
@@ -140,67 +147,6 @@ structure Reader = struct
     end
 end
 
-
-val r = _export "reader_init": (MLton.Pointer.t * Int64.int * Int64.int -> unit) -> unit;
-val _ = r (fn (file,offset,length) => Reader.init (file,offset,length))
-
-val s = _export "reader_updateOffset_bytesConsumed": (Int64.int * Int64.int-> unit) -> unit;
-val _ = s (fn (off,bytes) => Reader.updateOffset_bytesConsumed (off,bytes))
-
-fun setUpReader () = let
-    val offset = Reader.getOffset()
-    val reader = Reader.get()
-    in
-        if offset = 0 then () 
-        else (seekHdfs(reader, offset - 1); Reader.readLine ();())
-    end
-
-(*
-fun readNext () = let 
-    val start = Reader.getOffsetNow ()
-    val endOffset = (Reader.length()) + (Reader.getOffset())
-    fun append (result, i) =
-        let                
-            val line = Reader.readLine ()
-            val offNow = Reader.getOffsetNow ()
-            val bytes_read = Reader.getBytes_read() 
-            val end_of_file = bytes_read = 0
-            val end_of_split = offNow >= endOffset
-        in 
-            case (end_of_file, end_of_split, i = 1) of
-                (true,_,_) => if i = 3 then (result,false) else (result,true)
-                | (false,true,_) => (result ^ line ^ "\n", true) 
-                | (false,false,true) => (result ^ line ^ "\n", true)
-                | _ => append (result ^ line ^ "\n", i - 1)
-             
-        end
-
-    val (value,hasNext) = if start < endOffset then append("",3) else ("",false)
-    in
-        (*print ((Int64.toString start) ^ ":" ^ value);*)
-        if hasNext then setKeyValue (Reader.get(),cstring (Int64.toString start),cstring value)
-        else ();
-        hasNext
-    end
-*)
-fun readNext () = let 
-    val start = Reader.getOffsetNow ()
-    val endOffset = (Reader.length()) + (Reader.getOffset())
-    fun getLine () = (Reader.readLine (),true)
-
-    val (value,hasNext) = if start < endOffset then getLine() else ("",false)
-    in
-        if hasNext then setKeyValue (Reader.get(),cstring (Int64.toString start),cstring value)
-        else ();
-        hasNext
-    end
-
-val setup = _export "reader_setup": (unit -> unit) -> unit;
-val _ = setup (fn () => setUpReader())
-
-val r = _export "reader_nextVal": (unit -> bool) -> unit;
-val _ = r (fn () => readNext ())
-
 structure Writer = struct
     local 
         val writer = ref MLton.Pointer.null
@@ -210,11 +156,9 @@ structure Writer = struct
     end
 end
 
-val w = _export "writer_init": (MLton.Pointer.t -> unit) -> unit;
-val _ = w (fn wr => Writer.init wr)
 
-fun write (key,value) = Writer.emit (fetchCString key, fetchCString value)
 
-val mw = _export "mloop_write": (MLton.Pointer.t * MLton.Pointer.t -> unit) -> unit;
-val _ = mw (fn (k,v) => write (k,v))
+
+
+
     

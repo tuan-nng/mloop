@@ -13,6 +13,7 @@ fun mloop_combine_ (address:MLton.Pointer.t, key:MLton.Pointer.t) =
 
 fun mloop_reduce_ (key:MLton.Pointer.t) = mloop_reduce (fetchCString (key))
 
+(* Export map, reduce and combiner *)
 val m_init = _export "init_map": (MLton.Pointer.t  -> unit) -> unit;
 val _ = m_init (fn addr => init_map addr)
 
@@ -31,4 +32,23 @@ val _ = r (fn (k) => mloop_reduce_ (k))
 val c = _export "mloop_combine_": (MLton.Pointer.t * MLton.Pointer.t  -> unit) -> unit;
 val _ = c (fn (address, key) => mloop_combine_ (address, key))
 
-val v = runTask (false, false, false)
+(* Export reader, writer *)
+val r = _export "reader_init": (MLton.Pointer.t * Int64.int * Int64.int -> unit) -> unit;
+val _ = r (fn (file,offset,length) => Reader.init (file,offset,length))
+
+val s = _export "reader_updateOffset_bytesConsumed": (Int64.int * Int64.int-> unit) -> unit;
+val _ = s (fn (off,bytes) => Reader.updateOffset_bytesConsumed (off,bytes))
+
+val setup = _export "reader_setup": (unit -> unit) -> unit;
+val _ = setup (fn () => setUpReader())
+
+val r = _export "reader_nextVal": (unit -> bool) -> unit;
+val _ = r (fn () => mloop_read ())
+
+val w = _export "writer_init": (MLton.Pointer.t -> unit) -> unit;
+val _ = w (fn wr => Writer.init wr)
+
+val mw = _export "mloop_write": (MLton.Pointer.t * MLton.Pointer.t -> unit) -> unit;
+val _ = mw (fn (k,v) => mloop_write (k,v))
+
+val v = runTask (useCombiner, useReader, useWriter)
