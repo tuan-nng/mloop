@@ -22,7 +22,6 @@ namespace hu = HadoopUtils;
 using namespace HadoopPipes;
 
 MloopMapper::MloopMapper(hp::MapContext& ctx) {
-    printf("init mapper\n");
     hp::MapContext* ptr = &ctx;
     init_map((CPointer) ptr);
 }
@@ -37,7 +36,6 @@ void MloopMapper::close() {
 }
 
 MloopMapper::~MloopMapper() {
-    printf("delete mapper\n");
 }
 
 
@@ -57,7 +55,6 @@ void MloopReducer::close() {
 }
 
 MloopReducer::~MloopReducer() {
-    printf("delete reducer\n");
 }
 
 // Combiner
@@ -169,7 +166,6 @@ void MloopRecordReader::close() {
     hdfsCloseFile(fs, file);
     if (newLine != NULL)
         delete []newLine;
-    printf("Closed reader.\n");
 }
 
 MloopRecordReader::~MloopRecordReader() {

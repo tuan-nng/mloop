@@ -68,16 +68,6 @@ public:
     virtual void close();
 };
 
-//struct wrap_partitioner: hp::Partitioner, bp::wrapper<hp::Partitioner>, cxx_capsule {
-//  int partition(const std::string& key, int numOfReduces) {
-//    return this->get_override("partition")(key, numOfReduces);
-//  }
-//  virtual ~wrap_partitioner() {
-//    DESTROY_PYTHON_TOO(wrap_partitioner);
-//  }
-//};
-//
-
 class MloopRecordReader : public hp::RecordReader {
 private:
     hdfsFS fs;
@@ -125,37 +115,6 @@ public:
     virtual ~MloopRecordWriter();
 
 };
-//
-//struct wrap_record_writer: hp::RecordWriter, bp::wrapper<hp::RecordWriter>, cxx_capsule {
-//  void emit(const std::string& key, const std::string& value) {
-//    this->get_override("emit")(key, value);
-//  }
-//  void close() {
-//    this->get_override("close")();
-//  }
-//  virtual ~wrap_record_writer() {
-//    DESTROY_PYTHON_TOO(wrap_record_writer);
-//  }
-//};
-//
-//#define CREATE_AND_RETURN_OBJECT(wobj_t, obj_t, ctx_t, method_name, ctx) \
-//  bp::reference_existing_object::apply<ctx_t&>::type converter;          \
-//  PyObject* po_ctx = converter(ctx);                                     \
-//  bp::object o_ctx = bp::object(bp::handle<>(po_ctx));                   \
-//  bp::override f = this->get_override(#method_name);                     \
-//  if (f) {                                                               \
-//    bp::object res = f(o_ctx);                                           \
-//    std::auto_ptr<wobj_t> ap = bp::extract<std::auto_ptr<wobj_t> >(res); \
-//    PyObject* obj = res.ptr();                                           \
-//    bp::incref(obj);                                                     \
-//    wobj_t* o = ap.get();                                                \
-//    ap.release();                                                        \
-//    o->entering_cxx_land();                                              \
-//    return o;                                                            \
-//  } else {                                                               \
-//    return NULL;                                                         \
-//  }
-//
 
 class MloopFactory : public hp::Factory {
 private:

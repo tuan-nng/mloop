@@ -51,16 +51,6 @@ extern "C" {
         return (CPointer) value.c_str();
     }
 
-    //    CPointer reduceContext_getValueSet(CPointer reduceContext) {
-    //        ReduceContext* context = (ReduceContext*) reduceContext;
-    //        int size = 0;
-    //        while (context->nextValue()) {
-    //            std::string value = context->getInputValue();
-    //            size++;
-    //        }
-    //        return NULL;
-    //    }
-
     int32_t reduceContext_nextValue(CPointer reduceContext) {
         ReduceContext* context = (ReduceContext*) reduceContext;
         return context->nextValue();
